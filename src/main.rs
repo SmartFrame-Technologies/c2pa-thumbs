@@ -1,4 +1,4 @@
-use c2pa::ManifestStore;
+use c2pa::Reader;
 use c2pa::Manifest;
 use std::error::Error;
 use base64::engine::Engine as _;
@@ -41,21 +41,23 @@ fn main() -> Result<(), Box<dyn Error>> {
         process::exit(0x0000)
     }
 
-    let manifest_store = ManifestStore::from_file(args.path)?;
-    
+    let manifest_store = Reader::from_file(args.path)?;
+
     if args.list_manifests_labels {
         println!("Possible manifests: ");
-        for key in manifest_store.manifests().keys() {
-            println!("{key}");
+        for manifest in manifest_store.iter_manifests() {
+            if let Some(label) = manifest.label() {
+                println!("{label}");
+            }
         }
         process::exit(0x0000);
     }
 
     let manifest: Option<&Manifest>;
     if args.manifest_label.is_none() {
-        manifest = manifest_store.get_active();
+        manifest = manifest_store.active_manifest();
     } else {
-        manifest = manifest_store.get(args.manifest_label.unwrap().as_str());
+        manifest = manifest_store.get_manifest(args.manifest_label.unwrap().as_str());
     }
 
     let mut thumbs = ManifestThumbs { thumbnail: None, thumbnails: Vec::new()};
